@@ -26,12 +26,12 @@ Faucet을 통해 테스트넷에 토큰을 전송하는 자동화 케이스 구�
 	전송 후 대기시간 : 다음 행 진행 시 영향을 줌 / 동일 토큰, 주소는 1시간에 1회씩 50mdm 제공하여 3600을 입력해야 전송 가능
 
 ## Data setting
-	fFunc.py
+	fa_func.py
 	1. faucet URL, password, network, token 등 추가 및 변경되는 사항들에 대해 수정
 	
 ## Excution
 	while count 값을 변경해 반복횟수 조정
-	> python Faucet_send.py	
+	> python fa_send.py	
 
 ## Features
 * ### 지갑 정보 노출
@@ -39,10 +39,10 @@ Faucet을 통해 테스트넷에 토큰을 전송하는 자동화 케이스 구�
      - 현재 정보(자산) 출력 및 구글시트에 입력
 ```
 토큰 변경 케이스 (change_token, change_all)
-fFunc.faucet.changenet() 실행되어 wallet에서 네트워크 변경케이스 추가
+fa_func.faucet.changenet() 실행되어 wallet에서 네트워크 변경케이스 추가
 
 주소 변경 케이스 (change_adress, change_all)
-fFunc.faucet.changewallet() 실행되어 wallet에서 계정 변경케이스 추가
+fa_func.faucet.changewallet() 실행되어 wallet에서 계정 변경케이스 추가
 ```
 * ### 토큰 전송
   + Faucet에서 위에 설정한 네트워크에 해당하는 토큰을 동일한 주소로 전송
