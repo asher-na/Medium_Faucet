@@ -11,11 +11,17 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 import gspread
 import random
+import platform
 
-
+sysOS = platform.system()
 options = webdriver.ChromeOptions()
-_chromedriver = '/Users/medium/python/chromedriver' #chromedriver 위치에 따라 변경해야 함
-packed_extension_path = '/Users/medium/python/olkbchllhcflpbjfgagahpkjnjioiedg.zip' #chrome extension 위치에 따라 변경해야 함
+if (sysOS == 'Windows'):
+    _chromedriver = '../driver/window_chromedriver' #chromedriver 위치에 따라 변경해야 함
+    print('Windows')
+else:
+    _chromedriver = '../driver/chromedriver' #chromedriver 위치에 따라 변경해야 함
+    print('MacOS')
+packed_extension_path = '../crx/Medium-Wallet.crx' #chrome extension 위치에 따라 변경해야 함
 options.add_extension(packed_extension_path)
 driver = webdriver.Chrome(_chromedriver, options=options)
 
