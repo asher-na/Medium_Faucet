@@ -57,7 +57,7 @@ while count <(len(test_count)-2):
     # faucet에서 mdm 전송시 발생된 alert이 id[0] = red 이다
     alertid = driver.find_element_by_xpath('//*[@id="alert-{}"]'.format(id[0]))
     time.sleep(2)
-    # red alert이 화면에 노출될 경우
+    ## red alert이 화면에 노출될 경우
     if alertid.is_displayed(): # Display:none인 상태를 확인하는 조건문
         # faucet 화면에 노출되는 alert 출력 / 매개변수에 입력한 comment를 출력시키거나 구글 시트에 입력
         # 지갑 화면으로 전환 후 자산 노출 및 구글 시트에 저장

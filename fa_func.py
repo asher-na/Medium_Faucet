@@ -342,7 +342,7 @@ class wallet:
         time.sleep(1)
         driver.find_element_by_xpath("//*[@class='unlock-page__link text-light-gray']").click()
 
-        #시드 구문 입력하기
+        ##시드 구문 입력하기
         time.sleep(1)
         seedinput = driver.find_element_by_xpath("//*[@id='app-content']/div/div[4]/div/div/div/div[3]/div[1]/div/input")
         #adress_seed에 입력된 주소를 가져와서 그에따른 seed 구문 호출
