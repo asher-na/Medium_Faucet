@@ -1,13 +1,12 @@
-# -*- coding: utf-8 -*-
 from selenium import webdriver
 from selenium.webdriver import ActionChains
-from selenium.webdriver.common.by import By
 import time
 import datetime
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support.select import Select
 from selenium.webdriver.support.ui import Select
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.common.exceptions import NoSuchElementException
 import gspread
 import random
@@ -28,11 +27,17 @@ driver = webdriver.Chrome(_chromedriver, options=options)
 #============================================================================================================================================
 #               변수 리스트
 #============================================================================================================================================
+g_estimate = ""
+g_sheet_reason = ""
 
 #=======================공통 변수============================
 #구글 스프레드 시트 위치: https://docs.google.com/spreadsheets/d/1NVGssWH9tl_X7HW2Rwpff8M4INiTSQSfSvGayinUD6E/edit#gid=0
-gs = gspread.service_account(filename="./sheetkey.json") #참조할 구글시트에 공유 되어있는 json 파일 추가
+gs = gspread.service_account(filename="../google/sheetkey.json") #참조할 구글시트에 공유 되어있는 json 파일 추가
 sh = gs.open("Faucet_auto").worksheet("faucet_send")
+sh1 = gs.open("Faucet_auto").worksheet("Summary")
+
+#구글 스프레드 시트의 기존 데이터 삭제
+sh.batch_clear(["E3:G100", "G3:G100"])
 
 #Test를 위해 생성해놓은 계정 주소와 그에따른 Seed 구문
 #wallet 계정 변경 시 구글 시트에서 주소를 참조해 아래 주소와 비교하여 seed 구문을 가져오도록 되어 있음
@@ -70,7 +75,7 @@ url = 'http://54.180.99.44/'
 id = ['red', 'blue', 'blue-leak', 'red-etc', 'green']
 
 #Alert 발생시 구글 스프레드시트 or 출력 데이터에 입력할 양식 
-comment = ['예)주소입력 오류', '예)주소 입력 오류로 인해 전송 실패', '예)주소 입력 오류로 인해']
+comment = ['예)주소 입력 오류로 인해']
 
 #=======================Wallet 변수============================
 #지갑 비밀번호
@@ -78,7 +83,10 @@ password = 'vnfmsgk12#'
 
 # besu 네트워크 생성
 network_name = 'besu'
-rpc_url = 'http://13.124.209.160:8545'
+rpc_url = 'http://13.125.200.231:8545'
+rpc_url_2 = 'http://13.124.209.160:8545'
+rpc_url_3 = 'http://3.38.108.74:8545'
+rpc_url_4 = 'http://3.38.102.82:8545'
 chain_id = '2018'
 sign = 'MDM'
 
@@ -89,7 +97,7 @@ chain_id1 = '18'
 sign1 = 'MDM'
 
 #============================================================================================================================================
-##              Wallet 설정 
+#               Wallet 설정 
 #============================================================================================================================================
 
 class wallet:    
@@ -128,7 +136,8 @@ class wallet:
         time.sleep(1)
         seedinput = driver.find_element_by_xpath('//*[@id="app-content"]/div/div[3]/div/div/form/div[3]/div[1]/div/input[contains(@dir, "auto")]')
         #시드구문 가져오기 / adress_seed에 입력한 주소를 가져와 그에 해당하는 seed 구문을 출력한다
-        seedinput.send_keys(adress_seed["0x1914627a35cf0822714f79D2584b278F92fC8be5"])
+        seed_adress = sh.cell(3, 3).value
+        seedinput.send_keys(adress_seed[seed_adress])
 
         #시드 구문 표시버튼 클릭
         time.sleep(1)
@@ -171,7 +180,7 @@ class wallet:
 
 
     #새 네트워크 생성하기 / 매개변수에 원하는 변수를 넣어 네트워크 입력시 활용
-    def settingnet(network_name, rpc_url, chain_id, sign):
+    def settingnet():
         #Account menu 클릭하여 설정 진입
         time.sleep(1)
         driver.find_element_by_xpath("//*[@class='identicon__address-wrapper']").click()
@@ -181,11 +190,29 @@ class wallet:
         time.sleep(1)
         driver.find_element_by_xpath("//*[@id='app-content']/div/div[4]/div/div[2]/div[1]/div/button[6]/div[1]/div[1]").click()
 
-        #네트워크 추가 버튼 클릭
+        # 네트워크 추가 버튼 클릭
         time.sleep(1)
         driver.find_element_by_xpath("//*[@class='button btn-secondary']").click()
 
-        # 네트워크 입력 / 각 변수에 저장된 데이터를 가져와서 대입
+        # MDL 네트워크 입력 / 각 변수에 저장된 데이터를 가져와서 대입
+        time.sleep(1)
+        networkID = driver.find_element_by_xpath("//*[@id='network-name']").send_keys(network_name1)
+        time.sleep(1)
+        rpcURL = driver.find_element_by_xpath("//*[@id='rpc-url']").send_keys(rpc_url1)
+        time.sleep(1)
+        chainID = driver.find_element_by_xpath("//*[@id='chainId']").send_keys(chain_id1)
+        time.sleep(1)
+        ticker = driver.find_element_by_xpath("//*[@id='network-ticker']").send_keys(sign1)
+
+        # 저장버튼 클릭
+        time.sleep(1)
+        driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[2]/div[2]/div/div[2]/div[2]/div[7]/button[2]').click()
+
+        #네트워크 추가 버튼 클릭
+        time.sleep(2)
+        driver.find_element_by_xpath("//*[@class='button btn-secondary']").click()
+
+        # Besu 네트워크 입력 / 각 변수에 저장된 데이터를 가져와서 대입
         time.sleep(1)
         networkID = driver.find_element_by_xpath("//*[@id='network-name']").send_keys(network_name)
         time.sleep(1)
@@ -199,9 +226,110 @@ class wallet:
         time.sleep(1)
         driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[2]/div[2]/div/div[2]/div[2]/div[7]/button[2]').click()
 
-        #설정화면 빠져나와 홈화면 진입하기
-        time.sleep(1)
-        driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[1]/div[3]').click()
+        #저장버튼 클릭 시 besu 추가 안된 경우                      
+        time.sleep(2)
+        besu_check = driver.find_elements_by_xpath("//*[@class='networks-tab__networks-list-name networks-tab__networks-list-name--selected']")                
+        for i in besu_check:       
+            if i.text != 'besu':
+                # 취소 버튼 클릭
+                driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[2]/div[2]/div/div[2]/div[2]/div[7]/button[1]').click()
+
+                time.sleep(1)
+                #네트워크 추가 버튼 클릭
+                driver.find_element_by_xpath("//*[@class='button btn-secondary']").click()
+
+                time.sleep(1)
+                networkID = driver.find_element_by_xpath("//*[@id='network-name']").send_keys(network_name)
+                time.sleep(1)
+                rpcURL = driver.find_element_by_xpath("//*[@id='rpc-url']").send_keys(rpc_url_2)
+                time.sleep(1)
+                chainID = driver.find_element_by_xpath("//*[@id='chainId']").send_keys(chain_id)
+                time.sleep(1)
+                ticker = driver.find_element_by_xpath("//*[@id='network-ticker']").send_keys(sign)
+
+                #저장버튼 클릭
+                time.sleep(1)
+                driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[2]/div[2]/div/div[2]/div[2]/div[7]/button[2]').click() 
+
+                #저장버튼 클릭 시 besu 추가 안된 경우                      
+                time.sleep(2)
+                besu_check = driver.find_elements_by_xpath("//*[@class='networks-tab__networks-list-name networks-tab__networks-list-name--selected']")                
+                for i in besu_check:       
+                    if i.text != 'besu':
+                        # 취소 버튼 클릭
+                        driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[2]/div[2]/div/div[2]/div[2]/div[7]/button[1]').click()
+
+                        time.sleep(1)
+                        #네트워크 추가 버튼 클릭
+                        driver.find_element_by_xpath("//*[@class='button btn-secondary']").click()
+
+                        time.sleep(1)
+                        networkID = driver.find_element_by_xpath("//*[@id='network-name']").send_keys(network_name)
+                        time.sleep(1)
+                        rpcURL = driver.find_element_by_xpath("//*[@id='rpc-url']").send_keys(rpc_url_3)
+                        time.sleep(1)
+                        chainID = driver.find_element_by_xpath("//*[@id='chainId']").send_keys(chain_id)
+                        time.sleep(1)
+                        ticker = driver.find_element_by_xpath("//*[@id='network-ticker']").send_keys(sign)
+
+                        #저장버튼 클릭
+                        time.sleep(1)
+                        driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[2]/div[2]/div/div[2]/div[2]/div[7]/button[2]').click() 
+
+                        #저장버튼 클릭 시 besu 추가 안된 경우                      
+                        time.sleep(2)
+                        besu_check = driver.find_elements_by_xpath("//*[@class='networks-tab__networks-list-name networks-tab__networks-list-name--selected']")                
+                        for i in besu_check:                                   
+                            if i.text != 'besu':                                
+                                # 취소 버튼 클릭
+                                driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[2]/div[2]/div/div[2]/div[2]/div[7]/button[1]').click()
+
+                                time.sleep(1)
+                                #네트워크 추가 버튼 클릭
+                                driver.find_element_by_xpath("//*[@class='button btn-secondary']").click()
+
+                                time.sleep(1)
+                                networkID = driver.find_element_by_xpath("//*[@id='network-name']").send_keys(network_name)
+                                time.sleep(1)
+                                rpcURL = driver.find_element_by_xpath("//*[@id='rpc-url']").send_keys(rpc_url_4)
+                                time.sleep(1)
+                                chainID = driver.find_element_by_xpath("//*[@id='chainId']").send_keys(chain_id)
+                                time.sleep(1)
+                                ticker = driver.find_element_by_xpath("//*[@id='network-ticker']").send_keys(sign)
+
+                                #저장버튼 클릭
+                                time.sleep(1)
+                                driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[2]/div[2]/div/div[2]/div[2]/div[7]/button[2]').click()
+
+                                #저장버튼 클릭 시 besu 추가 안된 경우                      
+                                time.sleep(2)
+                                besu_check = driver.find_elements_by_xpath("//*[@class='networks-tab__networks-list-name networks-tab__networks-list-name--selected']")                
+                                for i in besu_check:                                   
+                                    if i.text != 'besu':
+                                        print('Wallet 에서 besu 네트워크 설정 실패로 테스트 종료')
+                                        sh.update_cell(3, 5, 'Wallet 에서 besu 네트워크 설정 실패로 테스트 종료')
+                                        driver.quit()
+                                        faucet.get_print()
+                                        quit()
+
+                                    else:
+                                        #설정화면 빠져나와 홈화면 진입하기
+                                        time.sleep(1)
+                                        driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[1]/div[3]').click() 
+                            else:
+                                #설정화면 빠져나와 홈화면 진입하기
+                                time.sleep(1)
+                                driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[1]/div[3]').click()                                
+
+                    else:
+                        #설정화면 빠져나와 홈화면 진입하기
+                        time.sleep(1)
+                        driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[1]/div[3]').click()
+                
+            else:
+                #설정화면 빠져나와 홈화면 진입하기
+                time.sleep(1)
+                driver.find_element_by_xpath('//*[@id="app-content"]/div/div[4]/div/div[1]/div[3]').click()          
 
     # 지갑 계정 복구(변경)하기
     def changewallet():        
@@ -312,11 +440,13 @@ class faucet():
         # 토큰 데이터 가져오기 / count 증가에 따른 cell 데이터 추출
         # count = 1일 경우 3행 1열의 데이터 추출
         token = sh.cell((count + 2), 2).value
-        
+
         # 테스트 목적을 확인하기 위한 데이터 가져오기 / 토큰 변경 유무 확인
         purpose = sh.cell(count + 2, 1).value
 
         # 구글시트에서 change_token, change_all 데이터를 가져오는 경우 wallet에서 네트워크를 변경
+        # 네트워크 변경하기
+        time.sleep(1)
         if purpose == "change_token":
             # 네트워크 변경하기
             time.sleep(1)
@@ -328,6 +458,16 @@ class faucet():
             print('{}로 변경 했습니다.'.format(token_net[token]))
 
         elif purpose == "change_all":
+            # 네트워크 변경하기
+            time.sleep(1)
+            dropmenu = driver.find_element_by_xpath("//*[@id='app-content']/div/div[1]/div/div[2]/div[1]/div/span").click()
+            action = ActionChains(driver)
+            # 구글시트에서 token 값을 가져오고 그 값을 token_net 변수에 대입시켜 network 값을 추출
+            submenu = WebDriverWait(driver, 10).until(EC.visibility_of_element_located((By.XPATH, '//span[contains(text(), "{}")]'.format(token_net[token]))))
+            action.move_to_element(submenu).click().perform()
+            print('{}로 변경 했습니다.'.format(token_net[token]))
+
+        elif purpose == "normal":
             # 네트워크 변경하기
             time.sleep(1)
             dropmenu = driver.find_element_by_xpath("//*[@id='app-content']/div/div[1]/div/div[2]/div[1]/div/span").click()
@@ -456,7 +596,7 @@ class faucet():
                     driver.find_element_by_xpath('//*[@id="confirm-password-helper-text"]')
                     print('====잘못된 비밀번호===')
 
-            # 다음 버튼이 활성화 이면 다음버튼 클릭
+            # 다음 버튼이 활성화 이면 다음버튼 클릭.
             else:
                 nextBtn.click()
 
@@ -473,7 +613,7 @@ class faucet():
         # 현재 자산 노출하기
         time.sleep(2)
         # 현재 지갑의 주소
-        adressinfo = driver.find_element_by_xpath("//*[@class='selected-account__address']")
+        adressinfo = driver.find_element_by_xpath("//*[@class='selected-account__address']")        
         # 현재 자산의 양
         mdmasset = driver.find_elements_by_xpath("//*[@class='currency-display-component__text']")
         # 현재 자산의 통화
@@ -513,24 +653,19 @@ class faucet():
         # 구글에서 추출한 토큰 및 주소로 mdm 보내기, 클릭
         time.sleep(1)
         driver.find_element_by_xpath("/html/body/main/div/section/div[1]/form/button").click()      
-        print('{0}, {1}주소로 토큰 발행합니다.'.format(token, adress))
-        time.sleep(15)
+        print('{0}, {1}주소로 토큰 발행합니다.'.format(token, adress))     
+        time.sleep(10)
 
-    #실패 Alert 노출 시 동작 설정하기
-    # ids = 변수 id 호출하여 Alert 종류 확인 / comment = id에 따른 Alert 코멘트 출력
     def failresult(ids, comment):
         a  
         count = counta('count', a)
     
-        # 노출된 Alert 체크 후 해당 Alert 출력
+        # 노출된 Alert 체크 후 해당 Alert 출력        
         text = driver.find_elements_by_xpath('//*[@id="alert-{}"]/div[1]'.format(ids))        
         for i in text:
             print(i.text)
-            break
-        # 노출된 Alert에 따른 코멘트 구글 시트에 입력
-        sh.update_cell((count + 2), 5, comment[0])
-        sh.update_cell((count + 2), 9, comment[1])
-        time.sleep(2)
+            sh.update_cell((count + 2), 5, (i.text))
+            break     
 
         #wallet 화면으로 전환        
         driver.switch_to.window(driver.window_handles[0])
@@ -545,8 +680,8 @@ class faucet():
         # 현재 주소에 따른 자산 노출 및 테스트 회차 출력
         for asset in mdmasset:
             for curren in currency:
-                print('현재 {0}주소의 자산은 {1}{2} 입니다.'.format(adressinfo, asset.text, curren.text))                                        
-                print('{0} {1}회차 전송 실패하였습니다.'.format(comment[2], count))
+                print('현재 {0}주소의 자산은 {1}{2} 입니다.'.format(adressinfo.text, asset.text, curren.text))                                        
+                print('{0} {1}회차 전송 실패하였습니다.'.format(comment[0], count))
                 break
         # 구글 시트에 노출된 자산 입력
         sh.update_cell((count + 2), 7, asset.text)       
@@ -555,25 +690,25 @@ class faucet():
         time.sleep(5)
 
     #성공 Alert 노출 시 동작 설정하기
-    # ids = 변수 id 호출하여 Alert 종류 확인
+    # ids = 변수 id 호출하여 Alert 종류 확인    
     def passresult(ids):
         a    
         count = counta('count', a)        
         # 노출된 Alert 확인
         id = driver.find_element_by_xpath('//*[@id="alert-{}"]'.format(ids))
         text = driver.find_elements_by_xpath('//*[@id="alert-{}"]/div[1]'.format(ids))
-        # 설정한 mdmasset 값을 구글시트에 입력
+        # 설정한 mdmasset 값 check
         mdmasset = 50
         for i in text:             
             print(i.text)            
             print("{}MDM을 전송 하였습니다.".format(mdmasset))
-            sh.update_cell((count + 2), 5, mdmasset)
+            sh.update_cell((count + 2), 5, (i.text))
             time.sleep(2)
             break
 
         #wallet 화면으로 전환
         driver.switch_to.window(driver.window_handles[0])
-        time.sleep(60)
+        time.sleep(120)
 
         # 현재 지갑의 주소
         adressinfo = driver.find_element_by_xpath("//*[@class='selected-account__address']")
@@ -584,7 +719,7 @@ class faucet():
         # 현재 주소에 따른 자산 노출 및 테스트 회차 출력
         for asset in mdmasset:
             for curren in currency:                                
-                print('현재 {0}주소의 자산은 {1}{2} 입니다.'.format(adressinfo, asset.text, curren.text))                    
+                print('현재 {0}주소의 자산은 {1}{2} 입니다.'.format(adressinfo.text, asset.text, curren.text))                    
                 sh.update_cell((count + 2), 7, asset.text)
                 print('{}회차 전송 성공하였습니다.'.format(count))
                 break
@@ -595,8 +730,39 @@ class faucet():
         print('{}초 대기 합니다.'.format(t))
         time.sleep(t)
 
+    #alert 미발생 시 (60초)
+    def alertError():
+        a  
+        count = counta('count', a)
+    
+        # 노출된 Alert 체크 후 해당 Alert 출력                
+        print('1분 대기 시 Alert 발생되지 않았습니다.')
+        time.sleep(2)
+        #wallet 화면으로 전환        
+        driver.switch_to.window(driver.window_handles[0])
+        time.sleep(60)            
+
+        # 현재 지갑의 주소
+        adressinfo = driver.find_element_by_xpath("//*[@class='selected-account__address']")
+        # 현재 자산의 양
+        mdmasset = driver.find_elements_by_xpath("//*[@class='currency-display-component__text']")
+        # 현재 자산의 통화
+        currency = driver.find_elements_by_xpath("//*[@class='currency-display-component__suffix']")
+        # 현재 주소에 따른 자산 노출 및 테스트 회차 출력
+        for asset in mdmasset:
+            for curren in currency:
+                print('현재 {0}주소의 자산은 {1}{2} 입니다.'.format(adressinfo.text, asset.text, curren.text))                                        
+                print('{faucet 에서 로딩 오류로 {}회차 전송 실패하였습니다.'.format(count))
+                break
+        # 구글 시트에 노출된 자산 입력
+        sh.update_cell((count + 2), 7, asset.text)       
+        time.sleep(2)        
+        print('{}초 대기 합니다.'.format(5))        
+        time.sleep(5)
+
     #종료 시간
     def endtime():
+        global g_estimate
         a
         count = counta('count', a)
         time.sleep(2)
@@ -613,6 +779,31 @@ class faucet():
 
         #종료시간 - 시작시간 계산하여 경과시간 측정
         sec = end - start
-        result = str(datetime.timedelta(seconds=sec)).split(".")
+        result = str(datetime.timedelta(seconds=sec)).split(".") 
         print("총 소요시간은 {} 입니다.".format(result[0]))
+        g_estimate = result[0]
         time.sleep(2)
+
+    def get_print():
+        global g_sheet_reason
+        result_count = sh.col_values(8)
+        Pass = 'Pass'
+        NPass = 'NPass'
+        Fail = 'Fail'
+        Total_count = [i for i in range(len(result_count)-2)]
+        Pass_count = [i for i in range(len(result_count)) if Pass in result_count[i]]
+        NPass_count = [i for i in range(len(result_count)) if NPass in result_count[i]]
+        Fail_count = [i for i in range(len(result_count)) if Fail in result_count[i]]
+        print('=======================================================================')
+        print('============================Test end====================================')
+        print('=======================================================================')
+        print('Total : {0} | Pass : {1} | NPass : {2} | Fail : {3}'.format(len(Total_count), len(Pass_count),len(NPass_count), len(Fail_count)))
+        print('============================Fail reason================================')
+        reason = sh.range('I3:I100')
+        g_sheet_reason = ""
+        for cell in reason:    
+            if "Faucet" in cell.value:    
+                g_sheet_reason = g_sheet_reason + cell.value
+                reason_value = cell.value                    
+                print(reason_value)
+        
